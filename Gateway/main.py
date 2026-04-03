@@ -1,6 +1,6 @@
 from fastapi import FastAPI, HTTPException, Query
 from fastapi.responses import JSONResponse
-from pydantic import BaseModel
+from pydantic import BaseModel, Field, ConfigDict
 from typing import List, Optional
 import httpx
 
@@ -40,26 +40,55 @@ class FoodUpdate(BaseModel):
     description: Optional[str] = None
 
 
-class OrderItem(BaseModel):
-    food_id: int
+class OrderItemCreate(BaseModel):
     quantity: int
+    price: float
 
-class OrderOut(BaseModel):
-    id: int
-    user_id: int
-    items: List[OrderItem]
-    total_price: float
-    status: str
 
 class OrderCreate(BaseModel):
-    user_id: int
-    items: List[OrderItem]
-    total_price: float
+    customerId: str
+    name: str
+    phone: str
+    menuId: str
+    items: List[OrderItemCreate]
+    totalPrice: float
+
+
+class OrderItemOut(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+    quantity: int
+    price: float
+
+
+class OrderOut(BaseModel):
+    """Mirrors order-service `Order` response (camelCase / Mongo-style `__v`)."""
+
+    model_config = ConfigDict(populate_by_name=True)
+    order_id: int
+    customerId: str
+    name: str
+    phone: str
+    menuId: str
+    items: List[OrderItemOut]
+    totalPrice: float
+    status: str
+    createdAt: str
+    version: int = Field(0, alias="__v", serialization_alias="__v")
+
 
 class OrderUpdate(BaseModel):
-    items: Optional[List[OrderItem]] = None
-    total_price: Optional[float] = None
+    customerId: Optional[str] = None
+    name: Optional[str] = None
+    phone: Optional[str] = None
+    menuId: Optional[str] = None
+    items: Optional[List[OrderItemCreate]] = None
+    totalPrice: Optional[float] = None
     status: Optional[str] = None
+
+
+class OrderUpdateResponse(BaseModel):
+    message: str
+    order: OrderOut
 
 
 class PaymentOut(BaseModel):
@@ -272,12 +301,12 @@ async def create_order(order: OrderCreate):
     return JSONResponse(data, status_code=201)
 
 
-@app.put("/api/orders/{order_id}", response_model=OrderOut, tags=["orders"])
+@app.put("/api/orders/{order_id}", response_model=OrderUpdateResponse, tags=["orders"])
 async def update_order(order_id: int, order: OrderUpdate):
-    """Update an order."""
+    """Update an order (partial body; matches order-service)."""
     data = await _put(
         f"{SERVICE['orders']}/api/orders/{order_id}",
-        order.model_dump(exclude_none=True),
+        order.model_dump(exclude_unset=True),
     )
     return JSONResponse(data)
 
