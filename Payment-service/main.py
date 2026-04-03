@@ -28,3 +28,9 @@ def update(payment_id: int, payment: PaymentUpdate):
     if not updated:
         raise HTTPException(404, "Payment not found")
     return updated
+
+@app.delete("/api/payments/{payment_id}")
+def delete(payment_id: int):
+    if not service.delete(payment_id):
+        raise HTTPException(404, "Payment not found")
+    return {"message": "Payment deleted successfully"}
