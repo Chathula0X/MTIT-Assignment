@@ -1,5 +1,6 @@
 from data_service import OrderDataService
 
+
 class OrderService:
     def __init__(self):
         self.data_service = OrderDataService()
@@ -11,12 +12,13 @@ class OrderService:
         return self.data_service.get_by_id(order_id)
 
     def create(self, order):
-        order_dict = order.dict()
+        order_dict = (
+            order.model_dump() if hasattr(order, "model_dump") else order.dict()
+        )
         order_dict["status"] = "pending"
         return self.data_service.create(order_dict)
 
-    def update(self, order_id: int, order):
-        update_data = order.dict(exclude_unset=True)
+    def update(self, order_id: int, update_data: dict):
         return self.data_service.update(order_id, update_data)
 
     def delete(self, order_id: int):

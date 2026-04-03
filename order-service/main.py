@@ -1,6 +1,6 @@
 from fastapi import FastAPI, HTTPException, status
 from typing import List
-from models import Order, OrderCreate, OrderUpdate
+from models import Order, OrderCreate, OrderUpdate, OrderUpdateResponse
 from service import OrderService
 
 app = FastAPI(title="Order Microservice", version="1.0.0")
@@ -29,13 +29,18 @@ def create_order(order: OrderCreate):
     """Create new order"""
     return order_service.create(order)
 
-@app.put("/api/orders/{order_id}", response_model=Order)
+@app.put("/api/orders/{order_id}", response_model=OrderUpdateResponse)
 def update_order(order_id: int, order: OrderUpdate):
     """Update order"""
-    updated_order = order_service.update(order_id, order)
+    patch = order.model_dump(exclude_unset=True)
+    if not patch:
+        raise HTTPException(
+            status_code=400, detail="No fields to update (send at least one field)"
+        )
+    updated_order = order_service.update(order_id, patch)
     if not updated_order:
         raise HTTPException(status_code=404, detail="Order not found")
-    return updated_order
+    return {"message": "Update successful", "order": updated_order}
 
 @app.delete("/api/orders/{order_id}")
 def delete_order(order_id: int):
