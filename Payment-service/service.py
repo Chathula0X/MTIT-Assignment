@@ -17,3 +17,6 @@ class PaymentService:
 
     def update(self, payment_id: int, payment):
         return self.data_service.update(payment_id, payment.dict(exclude_unset=True))
+
+    def delete(self, payment_id: int):
+        return self.data_service.delete(payment_id)

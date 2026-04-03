@@ -21,3 +21,10 @@ class PaymentDataService:
                 self.payments[i].update(update_data)
                 return self.payments[i]
         return None
+
+    def delete(self, payment_id: int):
+        for i, payment in enumerate(self.payments):
+            if payment["id"] == payment_id:
+                self.payments.pop(i)
+                return True
+        return False
