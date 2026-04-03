@@ -3,7 +3,7 @@ from typing import List
 from models import Order, OrderCreate, OrderUpdate
 from service import OrderService
 
-app = FastAPI(title="Booking (Order) Microservice", version="1.0.0")
+app = FastAPI(title="Order Microservice", version="1.0.0")
 
 order_service = OrderService()
 
@@ -37,10 +37,10 @@ def update_order(order_id: int, order: OrderUpdate):
         raise HTTPException(status_code=404, detail="Order not found")
     return updated_order
 
-@app.delete("/api/orders/{order_id}", status_code=status.HTTP_204_NO_CONTENT)
+@app.delete("/api/orders/{order_id}")
 def delete_order(order_id: int):
     """Delete order"""
     success = order_service.delete(order_id)
     if not success:
         raise HTTPException(status_code=404, detail="Order not found")
-    return None
+    return {"message": "Delete successful"}
